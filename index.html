@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PCA Learning Lab</title>
+<style>
+:root{--ink:#172033;--muted:#637083;--blue:#315efb;--cyan:#1aa7a1;--orange:#ed8a3a;--purple:#7957d5;--bg:#f5f7fb;--card:#fff;--line:#dce2ec}
+*{box-sizing:border-box}body{margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Arial;color:var(--ink);background:var(--bg);line-height:1.55}
+header{background:linear-gradient(125deg,#17233d,#263f79 60%,#285c73);color:white;padding:54px 22px 46px}
+.wrap{max-width:1180px;margin:auto}.eyebrow{text-transform:uppercase;letter-spacing:.14em;font-size:.78rem;font-weight:800;opacity:.8}
+h1{font-size:clamp(2.3rem,6vw,4.6rem);line-height:1;margin:.18em 0}.lead{max-width:780px;font-size:1.18rem;opacity:.92}
+.pills{display:flex;gap:10px;flex-wrap:wrap;margin-top:22px}.pill{border:1px solid #ffffff55;border-radius:999px;padding:7px 12px;font-size:.88rem}
+nav{background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:4}.navin{display:flex;gap:8px;overflow:auto;padding:10px 20px;max-width:1180px;margin:auto}
+nav a{white-space:nowrap;text-decoration:none;color:var(--ink);font-weight:700;font-size:.9rem;padding:8px 11px;border-radius:9px}nav a:hover{background:#eef2ff;color:var(--blue)}
+main{max-width:1180px;margin:auto;padding:28px 20px 70px}.section{margin:18px 0 34px}.section h2{font-size:1.75rem;margin-bottom:4px}.sub{color:var(--muted);margin-top:0}
+.grid{display:grid;grid-template-columns:1.5fr .8fr;gap:18px}.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:20px;box-shadow:0 8px 24px #1720330a}
+.controls{display:grid;gap:14px}.control label{font-weight:750;display:flex;justify-content:space-between;gap:12px}.control input[type=range]{width:100%;accent-color:var(--blue)}
+svg{width:100%;height:auto;display:block}.statgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.stat{background:#f6f8fc;border-radius:13px;padding:13px}.stat b{font-size:1.3rem;display:block}
+.callout{border-left:4px solid var(--blue);background:#eef2ff;padding:13px 15px;border-radius:8px}.legend{display:flex;gap:15px;flex-wrap:wrap;font-size:.87rem;color:var(--muted)}.dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px}
+button{border:0;background:var(--blue);color:white;padding:10px 14px;border-radius:10px;font-weight:750;cursor:pointer}button.secondary{background:#e9edf5;color:var(--ink)}
+.bar{height:20px;background:#edf0f5;border-radius:999px;overflow:hidden}.bar>div{height:100%;background:var(--cyan)}
+.quizq{padding:15px 0;border-bottom:1px solid var(--line)}.quizq label{display:block;margin:7px 0}.feedback{font-weight:750;margin-top:7px}.good{color:#087a4b}.bad{color:#b13b34}
+footer{color:var(--muted);text-align:center;padding:30px}
+@media(max-width:780px){.grid{grid-template-columns:1fr}.statgrid{grid-template-columns:1fr 1fr}header{padding-top:38px}}
+</style>
+</head>
+<body>
+<header><div class="wrap">
+<div class="eyebrow">Interactive visual statistics</div>
+<h1>PCA Learning Lab</h1>
+<p class="lead">See Principal Component Analysis happen. Rotate candidate axes, watch projections change, inspect explained variance, compare scaling choices, and reconstruct data from fewer dimensions.</p>
+<div class="pills"><span class="pill">Geometry first</span><span class="pill">No installation</span><span class="pill">Live PCA calculations</span><span class="pill">Student-friendly</span></div>
+</div></header>
+<nav><div class="navin"><a href="#play">Playground</a><a href="#axis">Find PC1</a><a href="#scores">Scores & loadings</a><a href="#scale">Scaling</a><a href="#variance">Variance</a><a href="#recon">Reconstruction</a><a href="#quiz">Quiz</a></div></nav>
+<main>
+<section class="section" id="play"><h2>1 · PCA Playground</h2><p class="sub">Change the data cloud. PCA immediately finds its dominant directions.</p>
+<div class="grid"><div class="card"><svg id="pcaPlot" viewBox="0 0 700 460" aria-label="PCA scatterplot"></svg><div class="legend"><span><i class="dot" style="background:#315efb"></i>observations</span><span><i class="dot" style="background:#ed8a3a"></i>PC1</span><span><i class="dot" style="background:#7957d5"></i>PC2</span></div></div>
+<div class="card controls">
+<div class="control"><label>Correlation / elongation <span id="corrVal">0.82</span></label><input id="corr" type="range" min="0" max="95" value="82"></div>
+<div class="control"><label>Rotate cloud <span id="rotVal">28°</span></label><input id="rot" type="range" min="-75" max="75" value="28"></div>
+<div class="statgrid"><div class="stat">PC1 variance<b id="pc1v">—</b></div><div class="stat">PC2 variance<b id="pc2v">—</b></div></div>
+<div class="callout" id="playText"></div>
+<button id="reset">Reset example</button>
+</div></div></section>
+
+<section class="section" id="axis"><h2>2 · Find PC1 yourself</h2><p class="sub">Rotate a candidate axis. The best axis maximizes projected variance and minimizes 1D reconstruction error.</p>
+<div class="grid"><div class="card"><svg id="axisPlot" viewBox="0 0 700 460"></svg></div><div class="card controls">
+<div class="control"><label>Candidate angle <span id="angleVal">0°</span></label><input id="angle" type="range" min="-90" max="90" value="0"></div>
+<div class="statgrid"><div class="stat">Projected variance<b id="projVar">—</b></div><div class="stat">Reconstruction MSE<b id="mse">—</b></div></div>
+<div class="callout" id="axisText"></div></div></div></section>
+
+<section class="section" id="scores"><h2>3 · Scores vs. loadings</h2><p class="sub">Two words, two different objects.</p>
+<div class="grid"><div class="card"><h3>Scores belong to observations</h3><p>A score is an observation's coordinate after projection onto a principal component.</p><svg id="scorePlot" viewBox="0 0 700 360"></svg></div>
+<div class="card"><h3>Loadings belong to variables</h3><p>A loading describes how strongly an original variable contributes to the component direction.</p>
+<div class="callout"><b>Memory trick:</b><br>Scores = <b>samples</b>.<br>Loadings = <b>variables</b>.</div><p>The sign of an entire PCA axis can flip without changing the underlying solution.</p></div></div></section>
+
+<section class="section" id="scale"><h2>4 · Scaling changes the question</h2><p class="sub">Toggle between raw and standardized features.</p>
+<div class="grid"><div class="card"><svg id="scalePlot" viewBox="0 0 700 430"></svg></div><div class="card controls">
+<button id="scaleToggle">Currently: RAW units</button><div class="callout" id="scaleText"></div>
+<p><b>Raw PCA:</b> variables with large numerical variance can dominate.</p><p><b>Standardized PCA:</b> each variable begins with unit variance, emphasizing correlation structure.</p></div></div></section>
+
+<section class="section" id="variance"><h2>5 · Explained variance</h2><p class="sub">How much of the dataset's variation is retained when we keep the first k components?</p>
+<div class="grid"><div class="card"><svg id="scree" viewBox="0 0 700 390"></svg></div><div class="card controls">
+<div class="control"><label>Keep components <span id="kVal">2</span></label><input id="k" type="range" min="1" max="6" value="2"></div>
+<div class="stat">Cumulative variance retained<b id="cumv">—</b></div>
+<div class="callout">Explained variance measures variation in <b>X</b>. It is not classification accuracy and does not automatically equal scientific importance.</div></div></div></section>
+
+<section class="section" id="recon"><h2>6 · Reconstruction Lab</h2><p class="sub">Compression is lossy when dimensions are discarded.</p>
+<div class="grid"><div class="card"><svg id="reconPlot" viewBox="0 0 700 430"></svg></div><div class="card controls">
+<div class="control"><label>Dimensions retained <span id="dimVal">1</span></label><input id="dims" type="range" min="1" max="2" value="1"></div>
+<div class="stat">Reconstruction error<b id="reconErr">—</b></div>
+<div class="callout" id="reconText"></div></div></div></section>
+
+<section class="section" id="quiz"><h2>7 · Test yourself</h2><p class="sub">Immediate feedback. No grades, just understanding.</p><div class="card" id="quizBox"></div></section>
+</main>
+<footer>PCA Learning Lab · Built for visual, intuition-first learning</footer>
+<script>
+(()=>{
+const $=s=>document.querySelector(s), NS="http://www.w3.org/2000/svg";
+const base=Array.from({length:52},(_,i)=>{let t=(i-25.5)/9;let n=Math.sin(i*2.13)*.56+Math.cos(i*.73)*.27;return[t,n]});
+function makeData(c=.82,deg=28){let sx=1.15+c*1.35,sy=1.02-c*.72,a=deg*Math.PI/180;return base.map(([u,v])=>{let x=u*sx,y=v*sy;return[x*Math.cos(a)-y*Math.sin(a),x*Math.sin(a)+y*Math.cos(a)]})}
+function eig(pts){let mx=pts.reduce((s,p)=>s+p[0],0)/pts.length,my=pts.reduce((s,p)=>s+p[1],0)/pts.length,cxx=0,cyy=0,cxy=0;pts.forEach(([x,y])=>{x-=mx;y-=my;cxx+=x*x;cyy+=y*y;cxy+=x*y});cxx/=pts.length;cyy/=pts.length;cxy/=pts.length;let tr=cxx+cyy,d=Math.sqrt((cxx-cyy)**2+4*cxy*cxy),l1=(tr+d)/2,l2=(tr-d)/2,vx=cxy,vy=l1-cxx;if(Math.abs(vx)+Math.abs(vy)<1e-9){vx=1;vy=0}let n=Math.hypot(vx,vy);return{mx,my,l1,l2,vx:vx/n,vy:vy/n,wx:-vy/n,wy:vx/n}}
+function E(svg,name,a={}){let e=document.createElementNS(NS,name);Object.entries(a).forEach(([k,v])=>e.setAttribute(k,v));svg.appendChild(e);return e}
+function scatter(svg,pts,axes=true){svg.innerHTML="";let X=x=>350+x*55,Y=y=>225-y*55;if(axes){E(svg,"line",{x1:30,y1:225,x2:670,y2:225,stroke:"#dce2ec"});E(svg,"line",{x1:350,y1:20,x2:350,y2:440,stroke:"#dce2ec"})}pts.forEach(([x,y])=>E(svg,"circle",{cx:X(x),cy:Y(y),r:5,fill:"#315efb",opacity:.72}));return{X,Y}}
+let pts=[];
+function drawPCA(){let c=+$("#corr").value/100,r=+$("#rot").value;$("#corrVal").textContent=c.toFixed(2);$("#rotVal").textContent=r+"°";pts=makeData(c,r);let s=$("#pcaPlot"),{X,Y}=scatter(s,pts),q=eig(pts),L=4.6;E(s,"line",{x1:X(q.mx-q.vx*L),y1:Y(q.my-q.vy*L),x2:X(q.mx+q.vx*L),y2:Y(q.my+q.vy*L),stroke:"#ed8a3a","stroke-width":5});E(s,"line",{x1:X(q.mx-q.wx*3),y1:Y(q.my-q.wy*3),x2:X(q.mx+q.wx*3),y2:Y(q.my+q.wy*3),stroke:"#7957d5","stroke-width":4,"stroke-dasharray":"9 7"});let p1=q.l1/(q.l1+q.l2),p2=1-p1;$("#pc1v").textContent=(p1*100).toFixed(1)+"%";$("#pc2v").textContent=(p2*100).toFixed(1)+"%";$("#playText").innerHTML=p1>.85?"The cloud is strongly elongated. <b>One principal direction summarizes most of the variation.</b>":"The cloud is more circular. <b>PC2 still carries substantial information.</b>";drawAxis();drawScore();drawRecon()}
+function drawAxis(){let s=$("#axisPlot"),{X,Y}=scatter(s,pts),a=+$("#angle").value*Math.PI/180,u=[Math.cos(a),Math.sin(a)],q=eig(pts),L=4.7;$("#angleVal").textContent=$("#angle").value+"°";let vals=[],err=0;pts.forEach(([x,y])=>{let dx=x-q.mx,dy=y-q.my,t=dx*u[0]+dy*u[1],px=q.mx+t*u[0],py=q.my+t*u[1];vals.push(t);err+=(x-px)**2+(y-py)**2;E(s,"line",{x1:X(x),y1:Y(y),x2:X(px),y2:Y(py),stroke:"#9aa4b2",opacity:.28})});E(s,"line",{x1:X(q.mx-u[0]*L),y1:Y(q.my-u[1]*L),x2:X(q.mx+u[0]*L),y2:Y(q.my+u[1]*L),stroke:"#ed8a3a","stroke-width":5});let m=vals.reduce((a,b)=>a+b,0)/vals.length,v=vals.reduce((z,x)=>z+(x-m)**2,0)/vals.length;err/=pts.length;$("#projVar").textContent=v.toFixed(2);$("#mse").textContent=err.toFixed(2);let trueA=Math.atan2(q.vy,q.vx)*180/Math.PI,diff=Math.min(Math.abs(+$("#angle").value-trueA),180-Math.abs(+$("#angle").value-trueA));$("#axisText").innerHTML=diff<7?"🎯 <b>You found PC1.</b> Projected spread is near its maximum and reconstruction error near its minimum.":"Rotate the axis until the projected cloud spreads out as much as possible."}
+function drawScore(){let s=$("#scorePlot"),{X,Y}=scatter(s,pts),q=eig(pts),L=4.5;E(s,"line",{x1:X(q.mx-q.vx*L),y1:Y(q.my-q.vy*L),x2:X(q.mx+q.vx*L),y2:Y(q.my+q.vy*L),stroke:"#ed8a3a","stroke-width":4});pts.slice(0,12).forEach(([x,y])=>{let t=(x-q.mx)*q.vx+(y-q.my)*q.vy,px=q.mx+t*q.vx,py=q.my+t*q.vy;E(s,"line",{x1:X(x),y1:Y(y),x2:X(px),y2:Y(py),stroke:"#637083",opacity:.45})})}
+function drawRecon(){let s=$("#reconPlot"),{X,Y}=scatter(s,pts),q=eig(pts),d=+$("#dims").value,err=0;$("#dimVal").textContent=d;pts.forEach(([x,y])=>{let rx=x,ry=y;if(d===1){let t=(x-q.mx)*q.vx+(y-q.my)*q.vy;rx=q.mx+t*q.vx;ry=q.my+t*q.vy}err+=(x-rx)**2+(y-ry)**2;E(s,"circle",{cx:X(rx),cy:Y(ry),r:4,fill:"#ed8a3a",opacity:.85})});err/=pts.length;$("#reconErr").textContent=err.toFixed(3);$("#reconText").innerHTML=d===1?"Orange points are the <b>1D reconstructions</b>. The gap from blue points is information discarded with PC2.":"With both dimensions retained, reconstruction is exact (up to numerical precision)."}
+function drawScale(){let raw=$("#scaleToggle").dataset.mode!=="std",p=base.map(([u,v])=>[u*4.2,v*.6+u*.18]);if(!raw){let mx=p.reduce((s,x)=>s+x[0],0)/p.length,my=p.reduce((s,x)=>s+x[1],0)/p.length,sx=Math.sqrt(p.reduce((s,x)=>s+(x[0]-mx)**2,0)/p.length),sy=Math.sqrt(p.reduce((s,x)=>s+(x[1]-my)**2,0)/p.length);p=p.map(x=>[(x[0]-mx)/sx,(x[1]-my)/sy])}let s=$("#scalePlot"),{X,Y}=scatter(s,p),q=eig(p),L=raw?4.8:3.2;E(s,"line",{x1:X(q.mx-q.vx*L),y1:Y(q.my-q.vy*L),x2:X(q.mx+q.vx*L),y2:Y(q.my+q.vy*L),stroke:"#ed8a3a","stroke-width":5});$("#scaleToggle").textContent="Currently: "+(raw?"RAW units":"STANDARDIZED");$("#scaleText").innerHTML=raw?"The high-variance horizontal variable dominates the principal direction.":"After standardization, relative co-movement between variables has much more influence."}
+const ev=[.46,.27,.13,.075,.04,.025];
+function drawScree(){let s=$("#scree");s.innerHTML="";let k=+$("#k").value;$("#kVal").textContent=k;let cum=0;for(let i=0;i<ev.length;i++){cum+=ev[i];let x=65+i*95,h=ev[i]*550;E(s,"rect",{x,y:330-h,width:55,height:h,rx:5,fill:i<k?"#1aa7a1":"#dce2ec"});let t=E(s,"text",{x:x+27,y:355,"text-anchor":"middle",fill:"#637083","font-size":14});t.textContent="PC"+(i+1)}let retained=ev.slice(0,k).reduce((a,b)=>a+b,0);$("#cumv").textContent=(retained*100).toFixed(1)+"%"}
+const quiz=[["Which object belongs to an observation?",["Loading","Score","Eigenvalue"],1],["PC1 is chosen to…",["maximize projected variance","maximize classification accuracy","use the largest original variable"],0],["If all PC1 signs flip…",["PCA is invalid","the solution is fundamentally unchanged","variance becomes negative"],1],["Why standardize before PCA?",["Always to improve accuracy","to prevent large-scale variables dominating solely because of units","to make labels balanced"],1]];
+function buildQuiz(){let box=$("#quizBox");quiz.forEach((q,qi)=>{let d=document.createElement("div");d.className="quizq";d.innerHTML="<b>"+(qi+1)+". "+q[0]+"</b>";q[1].forEach((a,ai)=>{let l=document.createElement("label");l.innerHTML=`<input type="radio" name="q${qi}" value="${ai}"> ${a}`;d.appendChild(l)});let f=document.createElement("div");f.className="feedback";d.appendChild(f);d.addEventListener("change",e=>{let ok=+e.target.value===q[2];f.textContent=ok?"✓ Correct":"Not quite — try again.";f.className="feedback "+(ok?"good":"bad")});box.appendChild(d)})}
+$("#corr").addEventListener("input",drawPCA);$("#rot").addEventListener("input",drawPCA);$("#angle").addEventListener("input",drawAxis);$("#dims").addEventListener("input",drawRecon);$("#k").addEventListener("input",drawScree);$("#scaleToggle").addEventListener("click",e=>{e.currentTarget.dataset.mode=e.currentTarget.dataset.mode==="std"?"raw":"std";drawScale()});$("#reset").addEventListener("click",()=>{$("#corr").value=82;$("#rot").value=28;drawPCA()});
+drawPCA();drawScale();drawScree();buildQuiz();
+})();
+</script>
+</body></html>
